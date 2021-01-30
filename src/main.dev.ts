@@ -11,7 +11,8 @@
 import 'core-js/stable';
 import 'regenerator-runtime/runtime';
 import path from 'path';
-import { app, BrowserWindow, shell } from 'electron';
+
+import { app, BrowserWindow, shell, dialog } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
 // import MenuBuilder from './menu';
@@ -75,6 +76,7 @@ const createWindow = async () => {
     // frame: false,
     webPreferences: {
       nodeIntegration: true,
+      enableRemoteModule: true,
     },
   });
 
@@ -132,3 +134,6 @@ app.on('activate', () => {
   // dock icon is clicked and there are no other windows open.
   if (mainWindow === null) createWindow();
 });
+
+// TODO
+// https://www.electronjs.org/docs/tutorial/security#6-define-a-content-security-policy
