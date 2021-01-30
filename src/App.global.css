@@ -1,58 +1,285 @@
-/*
- * @NOTE: Prepend a `~` to css file paths that are in your node_modules
- *        See https://github.com/webpack-contrib/sass-loader#imports
- */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html,
 body {
-  position: relative;
-  color: white;
-  height: 100vh;
-  background: linear-gradient(
-    200.96deg,
-    #fedc2a -29.09%,
-    #dd5789 51.77%,
-    #7a2c9e 129.35%
-  );
-  font-family: sans-serif;
-  overflow-y: hidden;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  position: absolute;
+}
+
+body,
+input {
+  font: menu;
+}
+
+textarea,
+input,
+div,
+button {
+  outline: none;
+  margin: 0;
+}
+
+.controls {
+  background-color: rgb(217, 241, 238);
+  padding: 10px 10px 10px 10px;
 }
 
 button {
-  background-color: white;
-  padding: 10px 20px;
-  margin: 10px;
-  border-radius: 10px;
+  font-size: 14px;
+  background-color: rgb(181, 220, 216);
   border: none;
-  appearance: none;
-  font-size: 1.3rem;
-  box-shadow: 0px 8px 28px -6px rgba(24, 39, 75, 0.12),
-    0px 18px 88px -4px rgba(24, 39, 75, 0.14);
-  transition: transform ease-in 0.1s;
+  padding: 0.5em 1em;
 }
 
 button:hover {
-  transform: scale(1.05);
+  background-color: rgb(156, 198, 192);
 }
 
-li {
-  list-style: none;
+button:active {
+  background-color: rgb(144, 182, 177);
 }
 
-a {
-  text-decoration: none;
+button:disabled {
+  background-color: rgb(196, 204, 202);
 }
 
-a:hover {
-  opacity: 1;
-  text-decoration: none;
-  cursor: pointer;
-}
-
-.Hello {
+.container {
   display: flex;
-  justify-content: center;
-  align-items: center;
-  margin: 20px 0;
+  flex-direction: column;
+  min-height: 100vh;
+  min-width: 100vw;
+  position: relative;
+}
+
+.content {
+  height: 100vh;
+  display: flex;
+}
+
+.raw-markdown,
+.rendered-html {
+  min-height: 100%;
+  max-width: 50%;
+  flex-grow: 1;
+  padding: 1em;
+  overflow: scroll;
+  font-size: 16px;
+}
+
+.raw-markdown {
+  border: 5px solid rgb(238, 252, 250);
+  background-color: rgb(238, 252, 250);
+  font-family: monospace;
+}
+
+.raw-markdown.drag-over {
+  background-color: rgb(181, 220, 216);
+  border-color: rgb(75, 160, 151);
+}
+
+.raw-markdown.drag-error {
+  background-color: rgba(170, 57, 57, 1);
+  border-color: rgba(255, 170, 170, 1);
+}
+
+/* https://github.com/markdowncss/air/blob/master/css/air.css */
+
+@media print {
+  *,
+  *:before,
+  *:after {
+    background: transparent !important;
+    color: #000 !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+
+  a,
+  a:visited {
+    text-decoration: underline;
+  }
+
+  a[href]:after {
+    content: ' (' attr(href) ')';
+  }
+
+  abbr[title]:after {
+    content: ' (' attr(title) ')';
+  }
+
+  a[href^='#']:after,
+  a[href^='javascript:']:after {
+    content: '';
+  }
+
+  pre,
+  blockquote {
+    border: 1px solid #999;
+    page-break-inside: avoid;
+  }
+
+  thead {
+    display: table-header-group;
+  }
+
+  tr,
+  img {
+    page-break-inside: avoid;
+  }
+
+  img {
+    max-width: 100% !important;
+  }
+
+  p,
+  h2,
+  h3 {
+    orphans: 3;
+    widows: 3;
+  }
+
+  h2,
+  h3 {
+    page-break-after: avoid;
+  }
+}
+
+html {
+  font-size: 12px;
+}
+
+@media screen and (min-width: 32rem) and (max-width: 48rem) {
+  html {
+    font-size: 15px;
+  }
+}
+
+@media screen and (min-width: 48rem) {
+  html {
+    font-size: 16px;
+  }
+}
+
+body {
+  line-height: 1.85;
+}
+
+p,
+.air-p {
+  font-size: 1rem;
+  margin-bottom: 1.3rem;
+}
+
+h1,
+.air-h1,
+h2,
+.air-h2,
+h3,
+.air-h3,
+h4,
+.air-h4 {
+  margin: 1.414rem 0 0.5rem;
+  font-weight: inherit;
+  line-height: 1.42;
+}
+
+h1,
+.air-h1 {
+  margin-top: 0;
+  font-size: 3.998rem;
+}
+
+h2,
+.air-h2 {
+  font-size: 2.827rem;
+}
+
+h3,
+.air-h3 {
+  font-size: 1.999rem;
+}
+
+h4,
+.air-h4 {
+  font-size: 1.414rem;
+}
+
+h5,
+.air-h5 {
+  font-size: 1.121rem;
+}
+
+h6,
+.air-h6 {
+  font-size: 0.88rem;
+}
+
+small,
+.air-small {
+  font-size: 0.707em;
+}
+
+/* https://github.com/mrmrs/fluidity */
+
+img,
+canvas,
+iframe,
+video,
+svg,
+select,
+textarea {
+  max-width: 100%;
+}
+
+@import url(http://fonts.googleapis.com/css?family=Open + Sans:300italic, 300);
+
+img {
+  border-radius: 50%;
+  height: 200px;
+  margin: 0 auto;
+  width: 200px;
+}
+
+a,
+a:visited {
+  color: #3498db;
+}
+
+a:hover,
+a:focus,
+a:active {
+  color: #2980b9;
+}
+
+pre {
+  background-color: #fafafa;
+  padding: 1rem;
+  text-align: left;
+}
+
+blockquote {
+  margin: 0;
+  border-left: 5px solid #7a7a7a;
+  font-style: italic;
+  padding: 1.33em;
+  text-align: left;
+}
+
+ul,
+ol,
+li {
+  text-align: left;
+}
+
+p {
+  color: #777;
 }

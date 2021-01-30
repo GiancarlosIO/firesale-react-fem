@@ -52,6 +52,7 @@ export default merge(baseConfig, {
             },
           },
           'css-loader',
+          'postcss-loader',
           'sass-loader'
         ],
       },
