@@ -12,8 +12,10 @@ import marked from 'marked';
 import DOMPurify from 'dompurify';
 
 import Dialog from '../../Components/Dialog';
+import Alert from '../../Components/Alert';
 
 import type { Utils } from '../../utils';
+import { getDraggedFile, getDroppedFile, fileTypeIsSupported } from './utils';
 
 const writeFile = promisify(fs.writeFile);
 const utils: Utils = remote.require('./utils.ts').default;
@@ -42,7 +44,10 @@ const Editor = () => {
   const [rawHTML, setRawHTML] = React.useState('');
   const [htmlRendered, setHTMLRendered] = React.useState('');
   const [unsavedChanges, setUnsavedChanges] = React.useState(false);
+
+  // dialogs states
   const [dialogOpen, setDialogOpen] = React.useState(false);
+  const [alertOpen, setAlertOpen] = React.useState(false);
 
   /** We have 3 handlers that changes the rawHTML, thats why I preffer to use a single useEffect
    * Instead of calling setHTMLRendered in each of these handlers
@@ -85,6 +90,20 @@ const Editor = () => {
       currentWindow.setDocumentEdited(unsavedChanges);
     }
   }, [unsavedChanges, currentFileOpened]);
+
+  // React.useEffect(() => {
+  //   document.addEventListener('dragstart', () => {});
+  //   document.addEventListener('dragover', () => {});
+  //   document.addEventListener('dragleave', () => {});
+  //   document.addEventListener('drop', () => {});
+
+  //   textAreaRef.current?.addEventListener('dragover', (event) => {
+  //     const file = getDraggedFile(event);
+
+  //     if (fileTypeIsSupported(file)) {
+  //     }
+  //   });
+  // }, []);
 
   const temporalFileHasChanges = isUsingTmpFile && rawHTML.length > 0;
 
@@ -173,6 +192,20 @@ const Editor = () => {
     resetToInitialState();
   };
 
+  const onClickSaveHTML = async () => {
+    const newFile = await utils.openSaveDialog([
+      {
+        name: 'HTML Files',
+        extensions: ['html'],
+      },
+    ]);
+
+    if (!newFile.canceled && newFile.filePath) {
+      await writeFile(newFile.filePath, htmlRendered, { encoding: 'utf-8' });
+      setAlertOpen(true);
+    }
+  };
+
   return (
     <div>
       <section className="controls">
@@ -198,7 +231,12 @@ const Editor = () => {
         >
           Revert
         </button>
-        <button type="button" id="save-html">
+        <button
+          type="button"
+          id="save-html"
+          disabled={!htmlRendered}
+          onClick={onClickSaveHTML}
+        >
           Save HTML
         </button>
         <button type="button" id="show-file" disabled>
@@ -239,6 +277,12 @@ const Editor = () => {
         disagreeTextButton="Don't save"
         handleAgree={handleAgree}
         handleDisagree={handleDisagree}
+      />
+      <Alert
+        open={alertOpen}
+        handleClose={() => setAlertOpen(false)}
+        type="success"
+        message="¡Successfully saved!"
       />
     </div>
   );

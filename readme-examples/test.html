@@ -1,0 +1,609 @@
+<h1 id="size-limit-cult-of-martians">
+  Size Limit
+  <a href="http://cultofmartians.com/tasks/size-limit-config.html"
+    ><img
+      alt="Cult Of Martians"
+      src="http://cultofmartians.com/assets/badges/badge.svg"
+  /></a>
+</h1>
+<p>
+  <img
+    height="178"
+    width="120"
+    alt="Size Limit logo by Anton Lovchikov"
+    align="right"
+    src="https://ai.github.io/size-limit/logo.svg"
+  />
+</p>
+<p>
+  Size Limit is a performance budget tool for JavaScript. It checks every commit
+  on CI, calculates the real cost of your JS for end-users and throws an error
+  if the cost exceeds the limit.
+</p>
+<ul>
+  <li>
+    <strong>ES modules</strong> and <strong>tree-shaking</strong> support.
+  </li>
+  <li>
+    Add Size Limit to <strong>Travis CI</strong>, <strong>Circle CI</strong>,
+    <strong>GitHub Actions</strong> or another CI system to know if a pull
+    request adds a massive dependency.
+  </li>
+  <li>
+    <strong>Modular</strong> to fit different use cases: big JS applications
+    that use their own bundler or small npm libraries with many files.
+  </li>
+  <li>
+    Can calculate <strong>the time</strong> it would take a browser to download
+    and <strong>execute</strong> your JS. Time is a much more accurate and
+    understandable metric compared to the size in bytes.
+  </li>
+  <li>
+    Calculations include <strong>all dependencies and polyfills</strong> used in
+    your JS.
+  </li>
+</ul>
+<p align="center">
+  <img width="738" alt="Size Limit CLI" src="./img/example.png" />
+</p>
+
+<p>
+  With
+  <strong
+    ><a href="https://github.com/andresz1/size-limit-action"
+      >GitHub action</a
+    ></strong
+  >
+  Size Limit will post bundle size changes as a comment in pull request
+  discussion.
+</p>
+<p align="center">
+  <img
+    height="289"
+    width="686"
+    alt="Size Limit comment in pull request about bundle size changes"
+    src="https://raw.githubusercontent.com/andresz1/size-limit-action/master/assets/pr.png"
+  />
+</p>
+
+<p>
+  With <code>--why</code>, Size Limit can tell you <em>why</em> your library is
+  of this size and show the real cost of all your internal dependencies.
+</p>
+<p align="center">
+  <img width="650" alt="Bundle Analyzer example" src="./img/why.png" />
+</p>
+
+<p align="center">
+  <a href="https://evilmartians.com/?utm_source=size-limit">
+    <img
+      height="54"
+      width="236"
+      alt="Sponsored by Evil Martians"
+      src="https://evilmartians.com/badges/sponsored-by-evil-martians.svg"
+    />
+  </a>
+</p>
+
+<h2 id="who-uses-size-limit">Who Uses Size Limit</h2>
+<ul>
+  <li><a href="https://github.com/mobxjs/mobx">MobX</a></li>
+  <li><a href="https://github.com/callemall/material-ui">Material-UI</a></li>
+  <li><a href="https://github.com/postcss/autoprefixer">Autoprefixer</a></li>
+  <li>
+    <a href="https://github.com/postcss/postcss">PostCSS</a> reduced
+    <a
+      href="https://github.com/postcss/postcss/commit/150edaa42f6d7ede73d8c72be9909f0a0f87a70f"
+      >25% of the size</a
+    >.
+  </li>
+  <li>
+    <a href="https://github.com/ai/browserslist">Browserslist</a> reduced
+    <a
+      href="https://github.com/ai/browserslist/commit/640b62fa83a20897cae75298a9f2715642531623"
+      >25% of the size</a
+    >.
+  </li>
+  <li>
+    <a href="https://github.com/missive/emoji-mart">EmojiMart</a> reduced
+    <a href="https://github.com/missive/emoji-mart/pull/111">20% of the size</a>
+  </li>
+  <li>
+    <a href="https://github.com/ai/nanoid">nanoid</a> reduced
+    <a
+      href="https://github.com/ai/nanoid/commit/036612e7d6cc5760313a8850a2751a5e95184eab"
+      >33% of the size</a
+    >.
+  </li>
+  <li>
+    <a href="https://github.com/theKashey/react-focus-lock">React Focus Lock</a>
+    reduced
+    <a href="https://github.com/theKashey/react-focus-lock/pull/48"
+      >32% of the size</a
+    >.
+  </li>
+  <li>
+    <a href="https://github.com/logux">Logux</a> reduced
+    <a
+      href="https://github.com/logux/logux-client/commit/62b258e20e1818b23ae39b9c4cd49e2495781e91"
+      >90% of the size</a
+    >.
+  </li>
+</ul>
+<h2 id="how-it-works">How It Works</h2>
+<ol>
+  <li>
+    Size Limit contains a CLI tool, 3 plugins (<code>file</code>,
+    <code>webpack</code>, <code>time</code>) and 3 plugin presets for popular
+    use cases (<code>app</code>, <code>big-lib</code>, <code>small-lib</code>).
+    A CLI tool finds plugins in <code>package.json</code> and loads the config.
+  </li>
+  <li>
+    If you use the <code>webpack</code> plugin, Size Limit will bundle your JS
+    files into a single file. It is important to track dependencies and webpack
+    polyfills. It is also useful for small libraries with many small files and
+    without a bundler.
+  </li>
+  <li>
+    The <code>webpack</code> plugin creates an empty webpack project, adds your
+    library and looks for the bundle size difference.
+  </li>
+  <li>
+    The <code>time</code> plugin compares the current machine performance with
+    that of a low-priced Android devices to calculate the CPU throttling rate.
+  </li>
+  <li>
+    Then the <code>time</code> plugin runs headless Chrome (or desktop Chrome if
+    it’s available) to track the time a browser takes to compile and execute
+    your JS. Note that these measurements depend on available resources and
+    might be unstable.
+    <a href="https://github.com/mbalabash/estimo/issues/5">See here</a> for more
+    details.
+  </li>
+</ol>
+<h2 id="usage">Usage</h2>
+<h3 id="js-applications">JS Applications</h3>
+<p>
+  Suitable for applications that have their own bundler and send the JS bundle
+  directly to a client (without publishing it to npm). Think of a user-facing
+  app or website, like an email client, a CRM, a landing page or a blog with
+  interactive elements, using React/Vue/Svelte lib or vanilla JS.
+</p>
+<details
+  ><summary><b>Show instructions</b></summary>
+
+  <ol>
+    <li>
+      <p>Install the preset:</p>
+      <pre><code class="language-sh">$ npm install --save-dev size-limit @size-limit/preset-app
+</code></pre>
+    </li>
+    <li>
+      <p>
+        Add the <code>size-limit</code> section and the <code>size</code> script
+        to your <code>package.json</code>:
+      </p>
+      <pre><code class="language-diff">+ "size-limit": [
++   {
++     "path": "dist/app-*.js"
++   }
++ ],
+  "scripts": {
+    "build": "webpack ./webpack.config.js",
++   "size": "npm run build &amp;&amp; size-limit",
+    "test": "jest &amp;&amp; eslint ."
+  }
+</code></pre>
+    </li>
+    <li>
+      <p>Here’s how you can get the size for your current project:</p>
+      <pre><code class="language-sh">$ npm run size
+
+  Package size: 30.08 KB with all dependencies, minified and gzipped
+  Loading time: 602 ms   on slow 3G
+  Running time: 214 ms   on Snapdragon 410
+  Total time:   815 ms
+</code></pre>
+    </li>
+    <li>
+      <p>
+        Now, let’s set the limit. Add 25% to the current total time and use that
+        as the limit in your <code>package.json</code>:
+      </p>
+      <pre><code class="language-diff">  "size-limit": [
+    {
++     "limit": "1 s",
+      "path": "dist/app-*.js"
+    }
+  ],
+</code></pre>
+    </li>
+    <li>
+      <p>Add the <code>size</code> script to your test suite:</p>
+      <pre><code class="language-diff">  "scripts": {
+    "build": "webpack ./webpack.config.js",
+    "size": "npm run build &amp;&amp; size-limit",
+-   "test": "jest &amp;&amp; eslint ."
++   "test": "jest &amp;&amp; eslint . &amp;&amp; npm run size"
+  }
+</code></pre>
+    </li>
+    <li>
+      <p>
+        If you don’t have a continuous integration service running, don’t forget
+        to add one — start with
+        <a href="https://github.com/dwyl/learn-travis">Travis CI</a>.
+      </p>
+    </li>
+  </ol>
+</details>
+
+<h3 id="big-libraries">Big Libraries</h3>
+<p>JS libraries &gt; 10 KB in size.</p>
+<p>
+  This preset includes headless Chrome, and will measure your lib’s execution
+  time. You likely don’t need this overhead for a small 2 KB lib, but for larger
+  ones the execution time is a more accurate and understandable metric that the
+  size in bytes. Library like
+  <a href="https://github.com/facebook/react/">React</a> is a good example for
+  this preset.
+</p>
+<details
+  ><summary><b>Show instructions</b></summary>
+
+  <ol>
+    <li>
+      <p>Install preset:</p>
+      <pre><code class="language-sh">$ npm install --save-dev size-limit @size-limit/preset-big-lib
+</code></pre>
+    </li>
+    <li>
+      <p>
+        Add the <code>size-limit</code> section and the <code>size</code> script
+        to your <code>package.json</code>:
+      </p>
+      <pre><code class="language-diff">+ "size-limit": [
++   {
++     "path": "dist/react.production-*.js"
++   }
++ ],
+  "scripts": {
+    "build": "webpack ./scripts/rollup/build.js",
++   "size": "npm run build &amp;&amp; size-limit",
+    "test": "jest &amp;&amp; eslint ."
+  }
+</code></pre>
+    </li>
+    <li>
+      <p>
+        If you use ES modules you can test the size after tree-shaking with
+        <code>import</code> option:
+      </p>
+      <pre><code class="language-diff">  "size-limit": [
+    {
+      "path": "dist/react.production-*.js",
++     "import": "{ createComponent }"
+    }
+  ],
+</code></pre>
+    </li>
+    <li>
+      <p>Here’s how you can get the size for your current project:</p>
+      <pre><code class="language-sh">$ npm run size
+
+  Package size: 30.08 KB with all dependencies, minified and gzipped
+  Loading time: 602 ms   on slow 3G
+  Running time: 214 ms   on Snapdragon 410
+  Total time:   815 ms
+</code></pre>
+    </li>
+    <li>
+      <p>
+        Now, let’s set the limit. Add 25% to the current total time and use that
+        as the limit in your <code>package.json</code>:
+      </p>
+      <pre><code class="language-diff">  "size-limit": [
+    {
++     "limit": "1 s",
+      "path": "dist/react.production-*.js"
+    }
+  ],
+</code></pre>
+    </li>
+    <li>
+      <p>Add a <code>size</code> script to your test suite:</p>
+      <pre><code class="language-diff">  "scripts": {
+    "build": "rollup ./scripts/rollup/build.js",
+    "size": "npm run build &amp;&amp; size-limit",
+-   "test": "jest &amp;&amp; eslint ."
++   "test": "jest &amp;&amp; eslint . &amp;&amp; npm run size"
+  }
+</code></pre>
+    </li>
+    <li>
+      <p>
+        If you don’t have a continuous integration service running, don’t forget
+        to add one — start with
+        <a href="https://github.com/dwyl/learn-travis">Travis CI</a>.
+      </p>
+    </li>
+    <li>
+      <p>
+        Add the library size to docs, it will help users to choose your project:
+      </p>
+      <pre><code class="language-diff">  # Project Name
+
+  Short project description
+
+  * **Fast.** 10% faster than competitor.
++ * **Small.** 15 KB (minified and gzipped).
++   [Size Limit](https://github.com/ai/size-limit) controls the size.
+</code></pre>
+    </li>
+  </ol>
+</details>
+
+<h3 id="small-libraries">Small Libraries</h3>
+<p>JS libraries &lt; 10 KB in size.</p>
+<p>
+  This preset will only measure the size, without the execution time, so it’s
+  suitable for small libraries. If your library is larger, you likely want the
+  Big Libraries preset above.
+  <a href="https://github.com/ai/nanoid/">Nano ID</a> or
+  <a href="https://github.com/ai/storeon/">Storeon</a> are good examples for
+  this preset.
+</p>
+<details
+  ><summary><b>Show instructions</b></summary>
+
+  <ol>
+    <li>
+      <p>First, install <code>size-limit</code>:</p>
+      <pre><code class="language-sh">$ npm install --save-dev size-limit @size-limit/preset-small-lib
+</code></pre>
+    </li>
+    <li>
+      <p>
+        Add the <code>size-limit</code> section and the <code>size</code> script
+        to your <code>package.json</code>:
+      </p>
+      <pre><code class="language-diff">+ "size-limit": [
++   {
++     "path": "index.js"
++   }
++ ],
+  "scripts": {
++   "size": "size-limit",
+    "test": "jest &amp;&amp; eslint ."
+  }
+</code></pre>
+    </li>
+    <li>
+      <p>Here’s how you can get the size for your current project:</p>
+      <pre><code class="language-sh">$ npm run size
+
+  Package size: 177 B with all dependencies, minified and gzipped
+</code></pre>
+    </li>
+    <li>
+      <p>
+        If your project size starts to look bloated, run <code>--why</code> for
+        analysis:
+      </p>
+      <pre><code class="language-sh">$ npm run size -- --why
+</code></pre>
+    </li>
+    <li>
+      <p>
+        Now, let’s set the limit. Determine the current size of your library,
+        add just a little bit (a kilobyte, maybe) and use that as the limit in
+        your <code>package.json</code>:
+      </p>
+      <pre><code class="language-diff"> "size-limit": [
+    {
++     "limit": "9 KB",
+      "path": "index.js"
+    }
+ ],
+</code></pre>
+    </li>
+    <li>
+      <p>Add the <code>size</code> script to your test suite:</p>
+      <pre><code class="language-diff">  "scripts": {
+    "size": "size-limit",
+-   "test": "jest &amp;&amp; eslint ."
++   "test": "jest &amp;&amp; eslint . &amp;&amp; npm run size"
+  }
+</code></pre>
+    </li>
+    <li>
+      <p>
+        If you don’t have a continuous integration service running, don’t forget
+        to add one — start with
+        <a href="https://github.com/dwyl/learn-travis">Travis CI</a>.
+      </p>
+    </li>
+    <li>
+      <p>
+        Add the library size to docs, it will help users to choose your project:
+      </p>
+      <pre><code class="language-diff">  # Project Name
+
+  Short project description
+
+  * **Fast.** 10% faster than competitor.
++ * **Small.** 500 bytes (minified and gzipped). No dependencies.
++   [Size Limit](https://github.com/ai/size-limit) controls the size.
+</code></pre>
+    </li>
+  </ol>
+</details>
+
+<h2 id="reports">Reports</h2>
+<p>
+  Size Limit has a
+  <a href="https://github.com/andresz1/size-limit-action">GitHub action</a> that
+  comments and rejects pull requests based on Size Limit output.
+</p>
+<ol>
+  <li>Install and configure Size Limit as shown above.</li>
+  <li>
+    Add the following action inside
+    <code>.github/workflows/size-limit.yml</code>
+  </li>
+</ol>
+<pre><code class="language-yaml">name: 'size'
+on:
+  pull_request:
+    branches:
+      - master
+jobs:
+  size:
+    runs-on: ubuntu-latest
+    env:
+      CI_JOB_NUMBER: 1
+    steps:
+      - uses: actions/checkout@v1
+      - uses: andresz1/size-limit-action@v1.0.0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+</code></pre>
+<h2 id="config">Config</h2>
+<p>Size Limits supports three ways to define config.</p>
+<ol>
+  <li>
+    <p><code>size-limit</code> section in <code>package.json</code>:</p>
+    <pre><code class="language-json">  "size-limit": [
+    {
+      "path": "index.js",
+      "import": "{ createStore }",
+      "limit": "500 ms"
+    }
+  ]
+</code></pre>
+  </li>
+  <li>
+    <p>or a separate <code>.size-limit.json</code> config file:</p>
+    <pre><code class="language-js">[
+  {
+    path: 'index.js',
+    import: '{ createStore }',
+    limit: '500 ms',
+  },
+];
+</code></pre>
+  </li>
+  <li>
+    <p>or a more flexible <code>.size-limit.js</code> config file:</p>
+    <pre><code class="language-js">module.exports = [
+  {
+    path: 'index.js',
+    import: '{ createStore }',
+    limit: '500 ms',
+  },
+];
+</code></pre>
+  </li>
+</ol>
+<p>Each section in the config can have these options:</p>
+<ul>
+  <li>
+    <strong>path</strong>: relative paths to files. The only mandatory option.
+    It could be a path <code>"index.js"</code>, a
+    <a href="https://github.com/sindresorhus/globby#globbing-patterns"
+      >pattern</a
+    >
+    <code>"dist/app-*.js"</code> or an array
+    <code>["index.js", "dist/app-*.js", "!dist/app-exclude.js"]</code>.
+  </li>
+  <li>
+    <strong>import</strong>: partial import to test tree-shaking. It could be
+    <code>"{ lib }"</code> to test <code>import { lib } from 'lib'</code> or
+    <code>{ "a.js": "{ a }", "b.js": "{ b }" }</code> to test multiple files.
+  </li>
+  <li>
+    <strong>limit</strong>: size or time limit for files from the
+    <code>path</code> option. It should be a string with a number and unit,
+    separated by a space. Format: <code>100 B</code>, <code>10 KB</code>,
+    <code>500 ms</code>, <code>1 s</code>.
+  </li>
+  <li>
+    <strong>name</strong>: the name of the current section. It will only be
+    useful if you have multiple sections.
+  </li>
+  <li>
+    <strong>entry</strong>: when using a custom webpack config, a webpack entry
+    could be given. It could be a string or an array of strings. By default, the
+    total size of all entry points will be checked.
+  </li>
+  <li>
+    <strong>webpack</strong>: with <code>false</code> it will disable webpack.
+  </li>
+  <li>
+    <strong>running</strong>: with <code>false</code> it will disable
+    calculating running time.
+  </li>
+  <li>
+    <strong>gzip</strong>: with <code>false</code> it will disable gzip
+    compression.
+  </li>
+  <li>
+    <strong>brotli</strong>: with <code>true</code> it will use brotli
+    compression and disable gzip compression.
+  </li>
+  <li><strong>config</strong>: a path to a custom webpack config.</li>
+  <li>
+    <strong>ignore</strong>: an array of files and dependencies to exclude from
+    the project size calculation.
+  </li>
+</ul>
+<p>
+  If you use Size Limit to track the size of CSS files, make sure to set
+  <code>webpack: false</code>. Otherwise, you will get wrong numbers, because
+  webpack inserts <code>style-loader</code> runtime (≈2 KB) into the bundle.
+</p>
+<h2 id="plugins-and-presets">Plugins and Presets</h2>
+<p>Plugins:</p>
+<ul>
+  <li>
+    <code>@size-limit/file</code> checks the size of files with Gzip, Brotli or
+    without compression.
+  </li>
+  <li>
+    <code>@size-limit/webpack</code> adds your library to empty webpack project
+    and prepares bundle file for <code>file</code> plugin.
+  </li>
+  <li>
+    <code>@size-limit/time</code> uses headless Chrome to track time to execute
+    JS.
+  </li>
+  <li>
+    <code>@size-limit/dual-publish</code> compiles files to ES modules with
+    <a href="https://github.com/ai/dual-publish"><code>dual-publish</code></a>
+    to check size after tree-shaking.
+  </li>
+</ul>
+<p>Plugin presets:</p>
+<ul>
+  <li>
+    <code>@size-limit/preset-app</code> contains <code>file</code> and
+    <code>time</code> plugins.
+  </li>
+  <li>
+    <code>@size-limit/preset-big-lib</code> contains <code>webpack</code>,
+    <code>file</code>, and <code>time</code> plugins.
+  </li>
+  <li>
+    <code>@size-limit/preset-small-lib</code> contains <code>webpack</code> and
+    <code>file</code> plugins.
+  </li>
+</ul>
+<h2 id="js-api">JS API</h2>
+<pre><code class="language-js">const sizeLimit = require('size-limit');
+const filePlugin = require('@size-limit/file');
+const webpackPlugin = require('@size-limit/webpack');
+
+sizeLimit([filePlugin, webpackPlugin], [filePath]).then((result) =&gt; {
+  result; //=&gt; { size: 12480 }
+});
+</code></pre>

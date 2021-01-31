@@ -2,9 +2,11 @@
 import fs from 'fs';
 import { promisify } from 'util';
 
-import { dialog, app } from 'electron';
+import { dialog, app, FileFilter, remote } from 'electron';
 
 const readFile = promisify(fs.readFile);
+
+const currentWindow = remote.getCurrentWindow();
 
 const openFile = async (filepath: string) => {
   const content = await readFile(filepath, { encoding: 'utf-8' });
@@ -23,7 +25,7 @@ const filters = [
 ];
 
 const getFileFromUser = async () => {
-  const files = await dialog.showOpenDialog({
+  const files = await dialog.showOpenDialog(currentWindow, {
     properties: ['openFile'],
     buttonLabel: 'Open!!!',
     title: 'Open Fire Sale Document',
@@ -37,11 +39,11 @@ const getFileFromUser = async () => {
   return undefined;
 };
 
-const openSaveDialog = async () => {
-  const file = await dialog.showSaveDialog({
+const openSaveDialog = async (_filters?: FileFilter[]) => {
+  const file = await dialog.showSaveDialog(currentWindow, {
     title: 'Save Markdown',
     defaultPath: app.getPath('desktop'),
-    filters: [filters[0]],
+    filters: _filters || [filters[0]],
   });
 
   return file;
