@@ -50,6 +50,7 @@ button:active {
 
 button:disabled {
   background-color: rgb(196, 204, 202);
+  cursor: not-allowed;
 }
 
 .container {
