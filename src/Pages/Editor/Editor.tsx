@@ -4,10 +4,14 @@ import path from 'path';
 import { promisify } from 'util';
 import fs from 'fs';
 
+import { remote } from 'electron';
+
 import * as React from 'react';
+
 import marked from 'marked';
 import DOMPurify from 'dompurify';
-import { remote } from 'electron';
+
+import Dialog from '../../Components/Dialog';
 
 import type { Utils } from '../../utils';
 
@@ -30,6 +34,7 @@ const markedAndPurify = (markdown: string): string => {
 };
 
 const Editor = () => {
+  const textAreaRef = React.useRef<HTMLTextAreaElement>(null);
   const [isUsingTmpFile, setIsUsingTmpFile] = React.useState(true);
   const [currentFileOpened, setCurretFileOpened] = React.useState<
     File | undefined
@@ -37,6 +42,7 @@ const Editor = () => {
   const [rawHTML, setRawHTML] = React.useState('');
   const [htmlRendered, setHTMLRendered] = React.useState('');
   const [unsavedChanges, setUnsavedChanges] = React.useState(false);
+  const [dialogOpen, setDialogOpen] = React.useState(false);
 
   /** We have 3 handlers that changes the rawHTML, thats why I preffer to use a single useEffect
    * Instead of calling setHTMLRendered in each of these handlers
@@ -44,7 +50,10 @@ const Editor = () => {
   React.useEffect(() => {
     if (rawHTML) {
       setHTMLRendered(markedAndPurify(rawHTML));
+    } else {
+      setHTMLRendered('');
     }
+    textAreaRef.current?.focus();
   }, [rawHTML]);
 
   /**
@@ -77,6 +86,15 @@ const Editor = () => {
     }
   }, [unsavedChanges, currentFileOpened]);
 
+  const temporalFileHasChanges = isUsingTmpFile && rawHTML.length > 0;
+
+  const resetToInitialState = () => {
+    setCurretFileOpened(undefined);
+    setUnsavedChanges(false);
+    setRawHTML('');
+    setIsUsingTmpFile(true);
+  };
+
   const onChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
     const {
       target: { value },
@@ -106,7 +124,7 @@ const Editor = () => {
     }
   };
 
-  const onClickSave = async () => {
+  const saveContent = async () => {
     if (currentFileOpened) {
       // 1. save the new content file to the original file
       await writeFile(currentFileOpened?.filePath, rawHTML);
@@ -131,10 +149,34 @@ const Editor = () => {
     }
   };
 
+  const handleCloseDialog = () => {
+    setDialogOpen(false);
+  };
+
+  const onClickNewFile = () => {
+    if (unsavedChanges || temporalFileHasChanges) {
+      setDialogOpen(true);
+    } else {
+      resetToInitialState();
+      handleCloseDialog();
+    }
+  };
+
+  const handleAgree = () => {
+    saveContent();
+    handleCloseDialog();
+    resetToInitialState();
+  };
+
+  const handleDisagree = () => {
+    handleCloseDialog();
+    resetToInitialState();
+  };
+
   return (
     <div>
       <section className="controls">
-        <button type="button" id="new-file">
+        <button type="button" id="new-file" onClick={onClickNewFile}>
           New File
         </button>
         <button type="button" id="open-file" onClick={onClickOpenFile}>
@@ -143,8 +185,8 @@ const Editor = () => {
         <button
           type="button"
           id="save-markdown"
-          disabled={!(unsavedChanges || (isUsingTmpFile && rawHTML.length > 0))}
-          onClick={onClickSave}
+          disabled={!(unsavedChanges || temporalFileHasChanges)}
+          onClick={saveContent}
         >
           Save File
         </button>
@@ -176,6 +218,9 @@ const Editor = () => {
           id="markdown"
           value={rawHTML}
           onChange={onChange}
+          ref={textAreaRef}
+          // eslint-disable-next-line jsx-a11y/no-autofocus
+          autoFocus
         />
         <div
           className="rendered-html"
@@ -185,6 +230,16 @@ const Editor = () => {
           }}
         />
       </section>
+      <Dialog
+        title="Do you want to save the changes you made to the current file?"
+        textContent="Your changes will be lost if you don't save them"
+        open={dialogOpen}
+        handleClose={handleCloseDialog}
+        agreeTextButton="Save"
+        disagreeTextButton="Don't save"
+        handleAgree={handleAgree}
+        handleDisagree={handleDisagree}
+      />
     </div>
   );
 };
