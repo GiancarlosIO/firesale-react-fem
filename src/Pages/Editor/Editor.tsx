@@ -11,13 +11,17 @@ import * as React from 'react';
 import marked from 'marked';
 import DOMPurify from 'dompurify';
 
+import MuiAlert from '@material-ui/lab/Alert';
+
 import Dialog from '../../Components/Dialog';
 import Alert from '../../Components/Alert';
+import type { Color } from '../../Components/Alert';
 
 import type { Utils } from '../../utils';
 import { getDraggedFile, getDroppedFile, fileTypeIsSupported } from './utils';
 
 const writeFile = promisify(fs.writeFile);
+const readFile = promisify(fs.readFile);
 const utils: Utils = remote.require('./utils.ts').default;
 const currentWindow = remote.getCurrentWindow();
 
@@ -27,6 +31,16 @@ type File = {
   filePath: string;
   // temporal tells if the current file is not a "real" file. Therefore, the user is just writting in the default textarea
   temporal?: boolean;
+};
+
+type FileDragEvent = {
+  lastModified: number;
+  lastModifiedDate: Date;
+  name: string;
+  path: string;
+  size: number;
+  type: string;
+  webkitRelativePath: '';
 };
 
 const markedAndPurify = (markdown: string): string => {
@@ -47,7 +61,21 @@ const Editor = () => {
 
   // dialogs states
   const [dialogOpen, setDialogOpen] = React.useState(false);
-  const [alertOpen, setAlertOpen] = React.useState(false);
+  const [alertStatus, setAlertStatus] = React.useState<{
+    open: boolean;
+    message: string;
+    type: Color;
+  }>({
+    open: false,
+    message: '',
+    type: 'success',
+  });
+
+  const [dragStatus, setDragStatus] = React.useState<{
+    dragClassName: 'drag-over' | 'drag-error' | '';
+  }>({
+    dragClassName: '',
+  });
 
   /** We have 3 handlers that changes the rawHTML, thats why I preffer to use a single useEffect
    * Instead of calling setHTMLRendered in each of these handlers
@@ -91,19 +119,72 @@ const Editor = () => {
     }
   }, [unsavedChanges, currentFileOpened]);
 
-  // React.useEffect(() => {
-  //   document.addEventListener('dragstart', () => {});
-  //   document.addEventListener('dragover', () => {});
-  //   document.addEventListener('dragleave', () => {});
-  //   document.addEventListener('drop', () => {});
+  React.useEffect(() => {
+    const textAreaNode = textAreaRef.current;
+    document.addEventListener('dragstart', () => {});
+    document.addEventListener('dragover', (event) => {
+      event.preventDefault();
+    });
+    document.addEventListener('dragleave', () => {});
+    document.addEventListener('drop', () => {});
 
-  //   textAreaRef.current?.addEventListener('dragover', (event) => {
-  //     const file = getDraggedFile(event);
+    const textAreaDragOver = (event) => {
+      event.preventDefault();
+      event.stopPropagation();
 
-  //     if (fileTypeIsSupported(file)) {
-  //     }
-  //   });
-  // }, []);
+      // const file = getDroppedFile(event);
+      // console.log({
+      //   file,
+      //   files: event.dataTransfer.files,
+      //   items: event.dataTransfer.items,
+      // });
+      // setDragStatus({
+      //   dragClassName: fileTypeIsSupported(file) ? 'drag-over' : 'drag-error',
+      // });
+    };
+
+    const drop = async (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      const file: FileDragEvent = getDroppedFile(event);
+
+      console.log({
+        file,
+      });
+
+      const isSupported = fileTypeIsSupported(file);
+      if (isSupported) {
+        const content = await readFile(file.path, { encoding: 'utf-8' });
+
+        setRawHTML(content);
+        setCurretFileOpened({
+          // I don't know why but the content of a opened file always has a breakline at the end
+          // remove the breakLine from the end
+          content,
+          filename: file.name,
+          filePath: file.path,
+          temporal: false,
+        });
+        setIsUsingTmpFile(false);
+      } else {
+        setAlertStatus({
+          open: true,
+          type: 'error',
+          message: `The ${file.type} is not supported :(`,
+        });
+      }
+    };
+
+    textAreaNode?.addEventListener('dragover', textAreaDragOver);
+    textAreaNode?.addEventListener('drop', drop);
+    return () => {
+      console.log('Unmouting editor');
+
+      // todo remove the others drag-drop event listeners
+      textAreaNode?.removeEventListener('dragover', textAreaDragOver);
+      textAreaNode?.removeEventListener('drop', drop);
+    };
+  }, []);
 
   const temporalFileHasChanges = isUsingTmpFile && rawHTML.length > 0;
 
@@ -202,7 +283,11 @@ const Editor = () => {
 
     if (!newFile.canceled && newFile.filePath) {
       await writeFile(newFile.filePath, htmlRendered, { encoding: 'utf-8' });
-      setAlertOpen(true);
+      setAlertStatus((prev) => ({
+        type: 'success',
+        open: true,
+        message: '¡Successfully saved!',
+      }));
     }
   };
 
@@ -248,11 +333,11 @@ const Editor = () => {
       </section>
 
       <section className="content">
-        <label htmlFor="markdown" hidden>
+        {/* <label htmlFor="markdown" hidden>
           Markdown Content
-        </label>
+        </label> */}
         <textarea
-          className="raw-markdown"
+          className={`raw-markdown ${dragStatus.dragClassName}`}
           id="markdown"
           value={rawHTML}
           onChange={onChange}
@@ -279,10 +364,16 @@ const Editor = () => {
         handleDisagree={handleDisagree}
       />
       <Alert
-        open={alertOpen}
-        handleClose={() => setAlertOpen(false)}
-        type="success"
-        message="¡Successfully saved!"
+        open={alertStatus.open}
+        handleClose={() =>
+          setAlertStatus({
+            open: false,
+            message: '',
+            type: 'error',
+          })
+        }
+        type={alertStatus.type}
+        message={alertStatus.message}
       />
     </div>
   );

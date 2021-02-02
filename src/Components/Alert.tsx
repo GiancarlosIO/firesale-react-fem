@@ -23,23 +23,20 @@ const InnerAlert: React.FC<{
 };
 
 type AlertProps = {
-  type: 'success';
+  type: Color;
   open: boolean;
   handleClose: () => void;
   message: string;
 };
 
 const Alert: React.FC<AlertProps> = ({ type, open, handleClose, message }) => {
-  if (type === 'success') {
-    return (
-      <Snackbar open={open} autoHideDuration={3000} onClose={handleClose}>
-        <InnerAlert handleClose={handleClose} severity="success">
-          {message}
-        </InnerAlert>
-      </Snackbar>
-    );
-  }
-  return null;
+  return (
+    <Snackbar open={open} autoHideDuration={3000} onClose={handleClose}>
+      <InnerAlert handleClose={handleClose} severity={type}>
+        {message}
+      </InnerAlert>
+    </Snackbar>
+  );
 };
 
 export default Alert;
