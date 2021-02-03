@@ -4,7 +4,7 @@ import path from 'path';
 import { promisify } from 'util';
 import fs from 'fs';
 
-import { remote } from 'electron';
+import { remote, shell } from 'electron';
 
 import * as React from 'react';
 
@@ -291,6 +291,30 @@ const Editor = () => {
     }
   };
 
+  const showFileClick = () => {
+    if (!currentFileOpened?.filePath) {
+      setAlertStatus({
+        message: 'There is not file to open',
+        open: true,
+        type: 'error',
+      });
+      return;
+    }
+    shell.showItemInFolder(currentFileOpened.filePath);
+  };
+
+  const openInDefaultClick = () => {
+    if (!currentFileOpened?.filePath) {
+      setAlertStatus({
+        message: 'There is not file to open',
+        open: true,
+        type: 'error',
+      });
+      return;
+    }
+    shell.openPath(currentFileOpened.filePath);
+  };
+
   return (
     <div>
       <section className="controls">
@@ -324,10 +348,20 @@ const Editor = () => {
         >
           Save HTML
         </button>
-        <button type="button" id="show-file" disabled>
+        <button
+          type="button"
+          id="show-file"
+          onClick={showFileClick}
+          disabled={!(currentFileOpened && currentFileOpened.filePath)}
+        >
           Show File
         </button>
-        <button type="button" id="open-in-default" disabled>
+        <button
+          type="button"
+          id="open-in-default"
+          onClick={openInDefaultClick}
+          disabled={!(currentFileOpened && currentFileOpened.filePath)}
+        >
           Open in Default Application
         </button>
       </section>
