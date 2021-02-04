@@ -4,7 +4,7 @@ import path from 'path';
 import { promisify } from 'util';
 import fs from 'fs';
 
-import { remote, shell } from 'electron';
+import { remote, shell, ipcRenderer } from 'electron';
 
 import * as React from 'react';
 
@@ -76,6 +76,18 @@ const Editor = () => {
   }>({
     dragClassName: '',
   });
+
+  const handleOpenFile = (result: { content: string; filePath: string }) => {
+    const { content, filePath } = result;
+    const filename = path.basename(filePath);
+    setCurretFileOpened({
+      content,
+      filename,
+      filePath,
+    });
+    setRawHTML(content);
+    setIsUsingTmpFile(false);
+  };
 
   /** We have 3 handlers that changes the rawHTML, thats why I preffer to use a single useEffect
    * Instead of calling setHTMLRendered in each of these handlers
@@ -177,6 +189,11 @@ const Editor = () => {
 
     textAreaNode?.addEventListener('dragover', textAreaDragOver);
     textAreaNode?.addEventListener('drop', drop);
+
+    ipcRenderer.on('file-opened', (event, result) => {
+      handleOpenFile(result);
+    });
+
     return () => {
       console.log('Unmouting editor');
 
@@ -206,15 +223,16 @@ const Editor = () => {
     const result = await utils.getFileFromUser();
 
     if (result) {
-      const { content, filePath } = result;
-      const filename = path.basename(filePath);
-      setCurretFileOpened({
-        content,
-        filename,
-        filePath,
-      });
-      setRawHTML(content);
-      setIsUsingTmpFile(false);
+      handleOpenFile(result);
+      // const { content, filePath } = result;
+      // const filename = path.basename(filePath);
+      // setCurretFileOpened({
+      //   content,
+      //   filename,
+      //   filePath,
+      // });
+      // setRawHTML(content);
+      // setIsUsingTmpFile(false);
     }
   };
 

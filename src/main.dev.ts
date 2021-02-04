@@ -13,10 +13,12 @@ import 'regenerator-runtime/runtime';
 import path from 'path';
 import os from 'os';
 
-import { app, BrowserWindow, shell, session } from 'electron';
+import { app, BrowserWindow, shell, session, Menu } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
 // import MenuBuilder from './menu';
+
+import utils from './utils';
 
 export default class AppUpdater {
   constructor() {
@@ -107,7 +109,47 @@ const createWindow = async () => {
 
   // const menuBuilder = new MenuBuilder(mainWindow);
   // menuBuilder.buildMenu();
-  mainWindow.removeMenu();
+  const template = [
+    {
+      label: 'File',
+      submenu: [
+        {
+          label: 'Open File',
+          accelerator: 'CommandOrControl+O',
+          async click() {
+            const result = await utils.getFileFromUser();
+            if (result) {
+              mainWindow?.webContents.send('file-opened', result);
+            }
+          },
+        },
+      ],
+    },
+  ];
+
+  if (process.platform === 'darwin') {
+    const applicationName = 'File Sale';
+    template.unshift({
+      label: applicationName,
+      submenu: [
+        {
+          label: `About ${applicationName}`,
+          click() {},
+        },
+        {
+          label: `Quit ${applicationName}`,
+          click() {
+            app.quit();
+          },
+        },
+      ],
+    });
+  }
+
+  const applicationMenu = Menu.buildFromTemplate(template);
+  Menu.setApplicationMenu(applicationMenu);
+
+  // mainWindow.removeMenu();
 
   // Open urls in the user's browser
   mainWindow.webContents.on('new-window', (event, url) => {
