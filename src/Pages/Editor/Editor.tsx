@@ -89,6 +89,31 @@ const Editor = () => {
     setIsUsingTmpFile(false);
   };
 
+  const saveContent = async () => {
+    if (currentFileOpened) {
+      // 1. save the new content file to the original file
+      await writeFile(currentFileOpened?.filePath, rawHTML);
+
+      // 2. update the currentFileOpened state
+      setCurretFileOpened({
+        ...currentFileOpened,
+        content: rawHTML,
+      });
+    } else {
+      // 3. if there is not file opened, just tell the user where he wants to save the file
+      const newFile = await utils.openSaveDialog();
+      if (!newFile.canceled && newFile.filePath) {
+        await writeFile(newFile.filePath, rawHTML);
+        setCurretFileOpened({
+          content: rawHTML,
+          filePath: newFile.filePath,
+          filename: path.basename(newFile.filePath),
+        });
+        setIsUsingTmpFile(false);
+      }
+    }
+  };
+
   /** We have 3 handlers that changes the rawHTML, thats why I preffer to use a single useEffect
    * Instead of calling setHTMLRendered in each of these handlers
    */
@@ -190,18 +215,30 @@ const Editor = () => {
     textAreaNode?.addEventListener('dragover', textAreaDragOver);
     textAreaNode?.addEventListener('drop', drop);
 
-    ipcRenderer.on('file-opened', (event, result) => {
+    const fileOpened = (_, result) => {
       handleOpenFile(result);
-    });
+    };
+    ipcRenderer.on('file-opened', fileOpened);
 
     return () => {
-      console.log('Unmouting editor');
-
       // todo remove the others drag-drop event listeners
       textAreaNode?.removeEventListener('dragover', textAreaDragOver);
       textAreaNode?.removeEventListener('drop', drop);
+
+      ipcRenderer.removeListener('file-opened', fileOpened);
     };
   }, []);
+
+  React.useEffect(() => {
+    const saveFile = () => {
+      saveContent();
+    };
+    ipcRenderer.on('save-file', saveFile);
+
+    return () => {
+      ipcRenderer.removeListener('save-file', saveFile);
+    };
+  }, [currentFileOpened, rawHTML]);
 
   const temporalFileHasChanges = isUsingTmpFile && rawHTML.length > 0;
 
@@ -239,31 +276,6 @@ const Editor = () => {
   const onClickRevert = () => {
     if (currentFileOpened) {
       setRawHTML(currentFileOpened.content);
-    }
-  };
-
-  const saveContent = async () => {
-    if (currentFileOpened) {
-      // 1. save the new content file to the original file
-      await writeFile(currentFileOpened?.filePath, rawHTML);
-
-      // 2. update the currentFileOpened state
-      setCurretFileOpened({
-        ...currentFileOpened,
-        content: rawHTML,
-      });
-    } else {
-      // 3. if there is not file opened, just tell the user where he wants to save the file
-      const newFile = await utils.openSaveDialog();
-      if (!newFile.canceled && newFile.filePath) {
-        await writeFile(newFile.filePath, rawHTML);
-        setCurretFileOpened({
-          content: rawHTML,
-          filePath: newFile.filePath,
-          filename: path.basename(newFile.filePath),
-        });
-        setIsUsingTmpFile(false);
-      }
     }
   };
 

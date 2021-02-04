@@ -123,6 +123,13 @@ const createWindow = async () => {
             }
           },
         },
+        {
+          label: 'Save file',
+          accelerator: 'CommandOrControl+S',
+          click() {
+            mainWindow?.webContents.send('save-file');
+          },
+        },
       ],
     },
   ];
